@@ -3,7 +3,7 @@
 # The build copies those into a clean _site/ folder and publishes that, so the
 # server code and node_modules never end up on the CDN.
 [build]
-  command = "mkdir -p _site && cp index.html ads.txt _site/ && cp -r vendor _site/"
+  command = "mkdir -p _site && cp index.html privacy.html ads.txt _site/ && cp -r vendor _site/"
   publish = "_site"
 
 # Netlify auto-runs an install because package.json exists; --ignore-scripts
