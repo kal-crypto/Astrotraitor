@@ -1,0 +1,13 @@
+# ── AstroTraitors on Netlify ────────────────────────────────────────────────
+# The playable game is just index.html + ads.txt + vendor/three.global.js.
+# The build copies those into a clean _site/ folder and publishes that, so the
+# server code and node_modules never end up on the CDN.
+[build]
+  command = "mkdir -p _site && cp index.html ads.txt _site/ && cp -r vendor _site/"
+  publish = "_site"
+
+# Netlify auto-runs an install because package.json exists; --ignore-scripts
+# skips cloudflared's binary download (only used by the local `npm run host`
+# tunnel), keeping the deploy fast and reliable.
+[build.environment]
+  NPM_FLAGS = "--ignore-scripts"

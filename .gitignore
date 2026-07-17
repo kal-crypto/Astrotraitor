@@ -2,3 +2,4 @@
 node_modules/
 .cloudflared/
 among.zip
+_site/
