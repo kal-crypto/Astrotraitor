@@ -1,0 +1,17 @@
+{
+  "name": "astrotraitors",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "AstroTraitors — a first-person social-deduction game, playable online",
+  "scripts": {
+    "start": "node server.mjs",
+    "host": "node host.mjs"
+  },
+  "dependencies": {
+    "cloudflared": "^0.7.1",
+    "selfsigned": "^5.5.0",
+    "three": "^0.161.0",
+    "ws": "^8.21.1"
+  }
+}
