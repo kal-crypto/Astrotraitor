@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover" />
+<!-- run edge-to-edge / fullscreen-ish when added to a phone home screen -->
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="theme-color" content="#05070d" />
 <title>AstroTraitors</title>
 <!-- ============================ GOOGLE ADSENSE ============================
      Publisher ca-pub-5258918508845457.  The meta tag verifies site ownership; the script
@@ -346,7 +351,12 @@ window.ASTRO_SERVER = "wss://astrotraitor.onrender.com";
     overflow:auto; -webkit-overflow-scrolling:touch}
   .win h2{text-align:center; letter-spacing:3px; margin-bottom:4px}
   .win .sub{text-align:center; color:var(--dim); font-size:13px; margin-bottom:14px}
-  .close{position:absolute; top:18px; right:18px}
+  /* the ✕ lives on the overlay (not inside the scrolling panel), so it can never scroll out of
+     reach, and it clears the notch via safe-area insets. Big round hit target, bigger on touch. */
+  .close{position:absolute; top:calc(14px + env(safe-area-inset-top)); right:calc(14px + env(safe-area-inset-right));
+    z-index:5; width:46px; height:46px; padding:0; display:flex; align-items:center; justify-content:center;
+    font-size:20px; line-height:1; border-radius:50%}
+  body.touch .close{width:56px; height:56px; font-size:24px}
 
   /* meeting */
   #voteGrid{display:grid; grid-template-columns:repeat(2,minmax(240px,1fr)); gap:10px}
@@ -587,8 +597,7 @@ window.ASTRO_SERVER = "wss://astrotraitor.onrender.com";
   <h2 id="mgTitle">TASK</h2>
   <p class="sub" id="mgSub"></p>
   <div id="mgBody"></div>
-  <button class="btn close" id="mgClose">✕</button>
-</div></div>
+</div><button class="btn close" id="mgClose" aria-label="Close">✕</button></div>
 
 <!-- ============ MAP ============ -->
 <div class="overlay" id="mapOv"><div class="win" style="position:relative">
@@ -596,8 +605,7 @@ window.ASTRO_SERVER = "wss://astrotraitor.onrender.com";
   <p class="sub" id="mapSub"></p>
   <canvas id="mapCv" width="900" height="520"></canvas>
   <div id="sabList"></div>
-  <button class="btn close" id="mapClose">✕</button>
-</div></div>
+</div><button class="btn close" id="mapClose" aria-label="Close">✕</button></div>
 
 <!-- ============ END ============ -->
 <div class="overlay" id="end"><div style="text-align:center">
@@ -1935,7 +1943,7 @@ function buildRound(roster, youIdx){
     p.heading = Math.atan2(sp.x - p.x, sp.z - p.z);
     p.mesh.rotation.y = p.heading; p.kcd = killCd;
   });
-  yaw = me.heading + Math.PI; pitch = 0;
+  yaw = me.heading + Math.PI; pitch = FIXED_PITCH;
   refreshMarkers();
 }
 function soloRoster(cfg){
@@ -2060,8 +2068,11 @@ const meetPhase = () => meetLeft > VOTE_T ? 'discuss' : 'vote';   // derived fro
 const keys = {};
 
 /* ---------------- first-person camera ---------------- */
-let fpv = true, yaw = Math.PI, pitch = 0, bob = 0, sens = .0022;
-const PITCH_MAX = 1.35;
+// Vertical look is LOCKED: the mouse / right thumb only turn you left–right. On these flat
+// maps nothing lives above or below eye level, so a fixed slight-downward tilt frames nearby
+// players and the floor nicely and stops anyone staring at the ceiling. (TOP view still exists.)
+const FIXED_PITCH = -0.12;
+let fpv = true, yaw = Math.PI, pitch = FIXED_PITCH, bob = 0, sens = .0022;
 const canvas = renderer.domElement;
 const locked = () => document.pointerLockElement === canvas;
 function lockMouse(){
@@ -2082,9 +2093,7 @@ canvas.addEventListener('click', () => {
 });
 addEventListener('mousemove', e => {
   if (!locked()) return;
-  yaw   -= e.movementX * sens;
-  pitch -= e.movementY * sens;
-  pitch = clamp(pitch, -PITCH_MAX, PITCH_MAX);
+  yaw -= e.movementX * sens;         // horizontal look only — vertical is locked
 });
 
 /* ---------------- touch: left thumb moves, right thumb looks ----------------
@@ -2107,6 +2116,14 @@ function setDevice(phone){
   $('#devSwap').textContent = phone ? '🖥️ Switch to PC' : '📱 Switch to phone';
 }
 function enterTouchMode(){ if (!touchMode) setDevice(true); }
+// Go fullscreen on phones (must be called from a tap). No-ops on iOS Safari/iPhone, which
+// doesn't allow element fullscreen — the home-screen web-app metas cover that case instead.
+function goFullscreen(){
+  const el = document.documentElement;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
+  if (!req || document.fullscreenElement || document.webkitFullscreenElement) return;
+  try { const r = req.call(el); if (r && r.catch) r.catch(() => {}); } catch {}
+}
 canvas.addEventListener('pointerdown', e => {
   if (e.pointerType === 'touch') enterTouchMode();   // a real touch always means phone
   else if (!touchMode) return;                        // mouse on PC → pointer-lock path
@@ -2128,9 +2145,7 @@ canvas.addEventListener('pointermove', e => {
     stick.dx = dx/STICK_R; stick.dy = dy/STICK_R;
     $('#knob').style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
   } else if (e.pointerId === look.id){
-    yaw   -= (e.clientX - look.x) * TOUCH_SENS;
-    pitch -= (e.clientY - look.y) * TOUCH_SENS;
-    pitch = clamp(pitch, -PITCH_MAX, PITCH_MAX);
+    yaw -= (e.clientX - look.x) * TOUCH_SENS;    // horizontal look only — vertical is locked
     look.x = e.clientX; look.y = e.clientY;
   }
 });
@@ -4056,6 +4071,7 @@ GAMES.fixlights = (w, done) => {
 })();
 
 function startGame(){                       // solo / offline
+  if (touchMode) goFullscreen();           // re-assert fullscreen on phones in case it was dismissed
   net.mode = 'solo';
   cfg.name = ($('#nameIn').value || 'You').slice(0, 10);
   loadMap(cfg.map);
@@ -4261,6 +4277,7 @@ function renderLobby(){
   $(coarse ? '#pickPhone' : '#pickPc').classList.add('rec-on');
   const choose = phone => {
     setDevice(phone);
+    if (phone) goFullscreen();       // picking phone is a tap — the moment we're allowed to go fullscreen
     $('#pick').classList.remove('on');
     document.body.classList.remove('picking');
     showBanner();                    // menu is now visible — load the banner ad
