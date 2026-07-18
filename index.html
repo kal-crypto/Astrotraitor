@@ -149,6 +149,10 @@ window.ASTRO_SERVER = "wss://astrotraitor.onrender.com";
     align-items:center; justify-content:center; gap:3px; background:linear-gradient(#3b4a6d,#1c2439);
     box-shadow:0 6px 0 #0c1020, 0 8px 20px #0009; position:relative; overflow:hidden}
   .abtn .ico{font-size:24px; line-height:1}
+  /* keyboard shortcut shown under each button — desktop only (phones have no keys) */
+  .abtn .key{display:none}
+  body:not(.touch) .abtn .key{display:inline-block; font-size:9px; font-weight:bold; letter-spacing:.5px;
+    color:#e7eeff; background:#0007; border:1px solid #ffffff40; border-radius:4px; padding:0 5px; line-height:15px; min-width:14px}
   .abtn:active{transform:translateY(3px); box-shadow:0 3px 0 #0c1020}
   .abtn:disabled{filter:grayscale(.9) brightness(.5); cursor:default}
   .abtn#bKill{background:linear-gradient(#ec3f3f,#7d1414); grid-column:2}
@@ -444,14 +448,14 @@ window.ASTRO_SERVER = "wss://astrotraitor.onrender.com";
   <div id="hint">Click to look around &nbsp;·&nbsp; <kbd>V</kbd> overhead view</div>
   <button class="btn red" id="emerg" style="display:none">EMERGENCY</button>
   <div id="btns">
-    <button class="abtn" id="bView"><span class="ico">👁️</span><span class="lb">VIEW</span></button>
-    <button class="abtn" id="bMic" style="display:none"><span class="ico">🎤</span><span class="lb">MIC</span></button>
-    <button class="abtn" id="bMap"><span class="ico">🗺️</span>MAP</button>
-    <button class="abtn" id="bUse"><span class="ico">🖐️</span>USE</button>
-    <button class="abtn" id="bReport"><span class="ico">📢</span>REPORT</button>
-    <button class="abtn" id="bVent" style="display:none"><span class="ico">🌀</span>VENT</button>
+    <button class="abtn" id="bView"><span class="ico">👁️</span><span class="lb">VIEW</span><span class="key">V</span></button>
+    <button class="abtn" id="bMic" style="display:none"><span class="ico">🎤</span><span class="lb">MIC</span><span class="key">M</span></button>
+    <button class="abtn" id="bMap"><span class="ico">🗺️</span>MAP<span class="key">Tab</span></button>
+    <button class="abtn" id="bUse"><span class="ico">🖐️</span>USE<span class="key">E</span></button>
+    <button class="abtn" id="bReport"><span class="ico">📢</span>REPORT<span class="key">R</span></button>
+    <button class="abtn" id="bVent" style="display:none"><span class="ico">🌀</span>VENT<span class="key">F</span></button>
     <button class="abtn" id="bSab" style="display:none"><span class="ico">⚠️</span>SABOTAGE</button>
-    <button class="abtn" id="bKill" style="display:none"><span class="ico">🔪</span>KILL<span class="cd" style="display:none"></span></button>
+    <button class="abtn" id="bKill" style="display:none"><span class="ico">🔪</span>KILL<span class="key">Q</span><span class="cd" style="display:none"></span></button>
   </div>
 </div>
 
@@ -3463,6 +3467,9 @@ function openMinigame(step, onDone, title){
 }
 $('#mgClose').onclick = () => closeAllOverlays();
 $('#minigame').addEventListener('pointerdown', e => { if (e.target.id === 'minigame') closeAllOverlays(); });
+// the map's ✕ was never wired — close it the same way Tab does; tapping the backdrop closes it too
+$('#mapClose').onclick = () => toggleMap();
+$('#mapOv').addEventListener('pointerdown', e => { if (e.target.id === 'mapOv') toggleMap(); });
 
 const MG_TITLES = {wires:'Fix Wiring', swipe:'Swipe Card', download:'Download Data', upload:'Upload Data',
   asteroids:'Clear Asteroids', shields:'Prime Shields', simon:'Start Reactor', manifolds:'Unlock Manifolds',
