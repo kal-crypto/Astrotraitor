@@ -25,6 +25,26 @@ window.adsbygoogle = window.adsbygoogle || [];
 window.adBreak = window.adConfig = function (o) { window.adsbygoogle.push(o); };
 adConfig({ preloadAdBreaks: "on", sound: "on" });
 </script>
+<!-- ===================== GAMEMONETIZE SDK =====================
+     For publishing the game on the GameMonetize portal. This runs ALONGSIDE AdSense — it does
+     not replace it. The game module decides which serves: AdSense on our own site, GameMonetize
+     when the game is embedded anywhere else (their portal / other sites), so ads never double up.
+     onEvent hands game pause/resume + readiness to the module (which fills in GM.onPause/onResume). -->
+<script>
+window.GM = { ready: false, onPause: null, onResume: null };
+window.SDK_OPTIONS = {
+  gameId: "19hdEPSFQ4iUhtWoXHqg2E1kPCpUmaEgP8",
+  onEvent: function (a) {
+    if (a.name === "SDK_READY") window.GM.ready = true;
+    else if (a.name === "SDK_GAME_PAUSE" && window.GM.onPause) window.GM.onPause();
+    else if (a.name === "SDK_GAME_START" && window.GM.onResume) window.GM.onResume();
+  },
+};
+(function (a, b, c) {
+  var d = a.getElementsByTagName(b)[0];
+  a.getElementById(c) || ((a = a.createElement(b)).id = c, a.src = "https://api.gamemonetize.com/sdk.js", d.parentNode.insertBefore(a, d));
+})(document, "script", "gamemonetize-sdk");
+</script>
 <!-- ===================== ONLINE MULTIPLAYER SERVER =====================
      The game itself is static (works on Netlify), but "Play Online" needs the
      WebSocket relay (server.mjs) running somewhere that can run Node — e.g. Render.
@@ -2525,8 +2545,20 @@ let adPaused = false;
 const adPause  = () => { adPaused = true;  voice.stream?.getAudioTracks().forEach(t => t.enabled = false); };
 const adResume = () => { adPaused = false; if (voice.on && !voice.muted) voice.stream?.getAudioTracks().forEach(t => t.enabled = true); };
 
+// GameMonetize (portal distribution) reuses the exact same freeze/resume as the AdSense break,
+// so the game pauses identically during its ad. We keep AdSense on our own domain and let
+// GameMonetize serve the between-match ad everywhere else, so the two ad networks never collide.
+window.GM = window.GM || { ready: false };
+window.GM.onPause  = adPause;
+window.GM.onResume = adResume;
+const onOurSite = /(?:^|\.)astrotraitors\.netlify\.app$|\.onrender\.com$/i.test(location.hostname);
+const gmAdReady = () => !onOurSite && window.GM.ready && window.sdk && typeof window.sdk.showBanner === 'function';
+
 // Fullscreen ad shown between matches. adBreak freezes the game (beforeAd) and resumes after.
 function showInterstitial(){
+  // On a GameMonetize distribution let their SDK serve it — showBanner() is GM's interstitial,
+  // and it fires SDK_GAME_PAUSE/START which run adPause/adResume above.
+  if (gmAdReady()){ try { window.sdk.showBanner(); return; } catch {} }
   if (!adsEnabled() || typeof window.adBreak !== 'function') return;
   try {
     window.adBreak({
