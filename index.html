@@ -531,6 +531,20 @@ window.ASTRO_SERVER = "wss://astrotraitor.onrender.com";
   </p>
   <!-- AdSense Display banner (menu only, so it never covers gameplay). Filled by showBanner(). -->
   <div id="adBanner"></div>
+  <!-- ===================== GAMEMONETIZE VIDEO =====================
+       Optional GameMonetize video-player widget (a SEPARATE product from the game SDK — note its
+       own game id). It lives inside #menu, so it shows only on the menu and is hidden during play.
+       Renders a ~480px player; delete this whole block (div + script) to remove it. -->
+  <div id="gmVideoWrap" style="width:min(640px,92vw); margin:16px auto 0">
+    <div id="gamemonetize-video"></div>
+  </div>
+  <script>
+  window.VIDEO_OPTIONS = { gameid: "4kci7og3klgj0ivy2wz3gdvd9dth5e7n", width: "100%", height: "480px", color: "#3f007e", getAds: "false" };
+  (function (a, b, c) {
+    var d = a.getElementsByTagName(b)[0];
+    a.getElementById(c) || ((a = a.createElement(b)).id = c, a.src = "https://api.gamemonetize.com/video.js", d.parentNode.insertBefore(a, d));
+  })(document, "script", "gamemonetize-video-api");
+  </script>
   <p class="menuFoot">
     AstroTraitors is a free browser game — outwit the crew or complete your tasks.
     <br />
