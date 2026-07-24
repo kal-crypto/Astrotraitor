@@ -2542,8 +2542,20 @@ const adsEnabled = () =>
   window.ADSENSE_CLIENT && !/X{4,}/.test(window.ADSENSE_CLIENT);
 
 let adPaused = false;
-const adPause  = () => { adPaused = true;  voice.stream?.getAudioTracks().forEach(t => t.enabled = false); };
-const adResume = () => { adPaused = false; if (voice.on && !voice.muted) voice.stream?.getAudioTracks().forEach(t => t.enabled = true); };
+// GameMonetize forbids ANY game audio over their video ad, so we silence both directions:
+// the local mic (what we send) AND every peer's incoming voice (what we hear). Muting the peer
+// <audio> elements is what actually satisfies the rule — adPaused freezes tick(), so voiceUpdate()
+// stops touching volumes during the ad, and re-applies proximity volume on the first frame after.
+const adPause  = () => {
+  adPaused = true;
+  voice.stream?.getAudioTracks().forEach(t => t.enabled = false);
+  voice.peers?.forEach(v => { if (v.audio) v.audio.muted = true; });
+};
+const adResume = () => {
+  adPaused = false;
+  voice.peers?.forEach(v => { if (v.audio) v.audio.muted = false; });   // voiceUpdate() restores volume next frame
+  if (voice.on && !voice.muted) voice.stream?.getAudioTracks().forEach(t => t.enabled = true);
+};
 
 // GameMonetize (portal distribution) reuses the exact same freeze/resume as the AdSense break,
 // so the game pauses identically during its ad. We keep AdSense on our own domain and let
