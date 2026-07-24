@@ -29,7 +29,9 @@ adConfig({ preloadAdBreaks: "on", sound: "on" });
      For publishing the game on the GameMonetize portal. This runs ALONGSIDE AdSense — it does
      not replace it. The game module decides which serves: AdSense on our own site, GameMonetize
      when the game is embedded anywhere else (their portal / other sites), so ads never double up.
-     onEvent hands game pause/resume + readiness to the module (which fills in GM.onPause/onResume). -->
+     onEvent hands game pause/resume + readiness to the module (which fills in GM.onPause/onResume).
+     GameMonetize-hosted build: https://html5.gamemonetize.com/1s3hvpih8iouaorm3erreebsg4irm7ie/
+     (404s until the game is activated in the GameMonetize control panel). -->
 <script>
 window.GM = { ready: false, onPause: null, onResume: null };
 window.SDK_OPTIONS = {
